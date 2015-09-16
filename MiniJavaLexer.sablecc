@@ -1,0 +1,74 @@
+Package
+  minijava;
+Helpers
+  unicode_input_character = [0..0xffff];
+  ht                      = 0x0009; // horizontal tab
+  lf                      = 0x000a; // line feed or newline
+  ff                      = 0x000c; // form feed, or page break
+  cr                      = 0x000d; // carriage return
+  sp                      = ' ';    // space
+  line_terminator         = lf | cr | cr lf;
+  input_character         = [unicode_input_character - [cr + lf]];
+  not_star                = [unicode_input_character - '*'];
+  not_star_not_slash      = [unicode_input_character - ['*' + '/']];
+  digit                   = ['0'..'9'];
+  letter                  = ['a'..'z'] | ['A'..'Z'];
+  underscore              = '_';
+  true                    = 'true';
+  false                   = 'false';
+  single_line_comment     = '//' input_character* line_terminator;
+  multi_line_comment      = '/*' not_star* (('*' not_star_not_slash not_star*) | '*')+ '/' ;
+Tokens
+  // KEYWORDS
+  class                   = 'class';
+  public                  = 'public';
+  static                  = 'static';
+  void                    = 'void';
+  main                    = 'main';
+  extends                 = 'extends';
+  if                      = 'if';
+  else                    = 'else';
+  while                   = 'while';
+  this                    = 'this';
+  super                   = 'super';
+  new                     = 'new';
+  print                   = 'print';
+  int                     = 'int';
+  boolean                 = 'boolean';
+  string                  = 'string';
+  return                  = 'return';
+
+  // BRACES
+  lparen                  = '(';
+  rparen                  = ')';
+  lbrace                  = '{';
+  rbrace                  = '}';
+  lbracket                = '[';
+  rbracket                = ']';
+
+  // OPERATORS
+  plus                    = '+';
+  minus                   = '-';
+  mult                    = '*';
+  and                     = '&&';
+  not                     = '!';
+  less                    = '<';
+  length                  = 'length';
+
+  // OTHERS
+  assign                  = '=' ;
+  semicolon               = ';' ;
+  comma                   = ',' ;
+  dot                     = '.' ;
+
+  // LITERALS
+  integer_literal         = digit+;
+  boolean_literal         = true | false;
+  identifier              = letter (letter | digit | underscore)*;
+
+  // WS
+  white_space             = (ht | lf | ff | cr | sp)+;
+  comment                 = single_line_comment | multi_line_comment;
+
+Ignored Tokens
+  white_space, comment;
