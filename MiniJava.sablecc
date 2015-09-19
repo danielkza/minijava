@@ -20,133 +20,341 @@ Helpers
 
 Tokens
   // KEYWORDS
-  class                   = 'class';
-  public                  = 'public';
-  static                  = 'static';
-  void                    = 'void';
-  main                    = 'main';
-  extends                 = 'extends';
-  if                      = 'if';
-  else                    = 'else';
-  while                   = 'while';
-  this                    = 'this';
-  super                   = 'super';
-  new                     = 'new';
-  print                   = 'System.out.println';
-  int                     = 'int';
-  boolean                 = 'boolean';
-  string                  = 'String';
-  return                  = 'return';
+  class           = 'class';
+  public          = 'public';
+  static          = 'static';
+  void            = 'void';
+  main            = 'main';
+  extends         = 'extends';
+  if              = 'if';
+  else            = 'else';
+  while           = 'while';
+  this            = 'this';
+  super           = 'super';
+  new             = 'new';
+  print           = 'System.out.println';
+  int             = 'int';
+  boolean         = 'boolean';
+  string          = 'String';
+  return          = 'return';
 
   // BRACES
-  lparen                  = '(';
-  rparen                  = ')';
-  lbrace                  = '{';
-  rbrace                  = '}';
-  lbracket                = '[';
-  rbracket                = ']';
+  lparen          = '(';
+  rparen          = ')';
+  lbrace          = '{';
+  rbrace          = '}';
+  lbracket        = '[';
+  rbracket        = ']';
 
   // OPERATORS
-  plus                    = '+';
-  minus                   = '-';
-  mult                    = '*';
-  and                     = '&&';
-  not                     = '!';
-  less                    = '<';
-  length                  = 'length';
+  plus            = '+';
+  minus           = '-';
+  mult            = '*';
+  and             = '&&';
+  not             = '!';
+  less            = '<';
+  length          = 'length';
 
   // OTHERS
-  assign                  = '=' ;
-  semicolon               = ';' ;
-  comma                   = ',' ;
-  dot                     = '.' ;
+  assign          = '=' ;
+  semicolon       = ';' ;
+  comma           = ',' ;
+  dot             = '.' ;
 
   // LITERALS
-  integer_literal         = digit+;
-  true                    = 'true';
-  false                   = 'false';
-  identifier              = letter (letter | digit | underscore)*;
+  integer_literal = digit+;
+  true            = 'true';
+  false           = 'false';
+  id              = letter (letter | digit | underscore)*;
 
   // WS
-  white_space             = (ht | lf | ff | cr | sp)+;
-  comment                 = single_line_comment | multi_line_comment;
+  white_space     = (ht | lf | ff | cr | sp)+;
+  comment         = single_line_comment | multi_line_comment;
 
 Ignored Tokens
   white_space, comment;
 
 Productions
-  program                 = main_class class_decl*;
-  main_class              = [clazz]:class identifier lbrace main_method rbrace;
-  main_method             = public static void main
-                            lparen string lbracket rbracket [args_var]:identifier rparen
-                            lbrace [statements]:statement* rbrace;
-  class_decl              = [clazz]:class identifier [extends]:extends_decl? lbrace
-                              [fields]:var_decl*
-                              [methods]:method_decl*
-                            rbrace;
-  extends_decl            = extends identifier;
-  var_decl                = type identifier semicolon;
-  return_stm              = return [return_exp]:expression semicolon;
-  method_decl             = public type identifier lparen [params]:param_list? rparen lbrace
-                              [vars]:var_decl*
-                              [statements]:statement*
-                              return_stm?                              
-                            rbrace;
-  param_list =              param param_list_tail*;
-  param                   = type identifier;
-  param_list_tail         = comma param;
-  type                    = {int}       int |
-                            {boolean}   boolean |
-                            {int_array} int lbracket rbracket |
-                            {id}        identifier;
-  statement               = {block}        lbrace [statements]:statement* rbrace |
-                            {if_else}      if lparen [condition]:expression rparen [if_true]:statement
-                                           else [if_false]:statement |
-                            {while}        while lparen [condition]:expression rparen [body]:statement |
-                            {print}        print lparen [subject]:expression rparen semicolon |
-                            {assign}       [subject]:identifier assign [value]:expression semicolon |
-                            {index_assign} [subject]:identifier lbracket [index]:expression rbracket assign [value]:expression semicolon;
-  // Binary operators
-  bin_op_r1               = {and} and;
-  bin_op_r2               = {less} less;
-  bin_op_r3               = {plus} plus | {minus} minus;
-  bin_op_r4               = {mult} mult;
-  // Binary expressions
-  bin_r1_exp              = {op}  [left]:bin_r2_exp [operator]:bin_op_r1 [right]:bin_r2_exp |
-                            {exp} bin_r2_exp;
-  bin_r2_exp              = {op}  [left]:bin_r3_exp [operator]:bin_op_r2 [right]:bin_r3_exp |
-                            {exp} bin_r3_exp;
-  bin_r3_exp              = {op}  [left]:bin_r4_exp [operator]:bin_op_r3 [right]:bin_r4_exp |
-                            {exp} bin_r4_exp;
-  bin_r4_exp              = {op}  [left]:unary_r1_exp [operator]:bin_op_r4 [right]:unary_r1_exp |
-                            {exp} unary_r1_exp;
-  // Unary operators
-  unary_op_prefix         = not;
-  length_op               = dot length;
-  // unary_op_postfix        = length_op; 
-  // Unary expressions
-  unary_r1_exp            = {prefix_op} [operator]:unary_op_prefix unary_r2_exp |
-                            // {postfix_op} unary_r2_exp [operator]:unary_op_postfix |
-                            {exp} unary_r2_exp;
-  unary_r2_exp            = {method_call} [subject]:unary_r3_exp dot [method_name]:identifier
-                                          lparen [params]:exp_list? rparen |
-                            {exp} unary_r3_exp;
-  unary_r3_exp            = {length_op} unary_r4_exp length_op |
-                            {exp} unary_r4_exp;
-  unary_r4_exp            = {indexing} [subject]:value lbracket [index]:expression rbracket |
-                            {new_int_array} new int lbracket [size]:expression rbracket |
-                            {new_object} new [class_name]:identifier lparen rparen |
-                            {exp} value;
-  // Basic values
-  value                   = {constant} constant |
-                            {var_ref} identifier |
-                            {this_ref} this |
-                            {paren_exp} lparen expression rparen;
-  constant                = {integer} integer_literal |
-                            {boolean} boolean_literal;
-  boolean_literal         = {true} true | {false} false;
-  // Expressions
-  expression              = bin_r1_exp;
-  exp_list                = expression exp_list_tail*;
-  exp_list_tail           = comma expression;
+  program =
+      main_class class_decl*
+    {-> New program(main_class, [class_decl]) };
 
+  main_class =
+      [cls]:class identifier lbrace main_method rbrace
+    {-> New main_class(identifier, main_method.identifier, main_method.statement) };
+
+  identifier = id;
+
+  string_array =  string lbracket rbracket;
+
+  main_method {-> identifier statement } =
+      public static void main
+      lparen string_array [args_var]:identifier rparen
+      lbrace statement rbrace
+    {-> args_var statement };
+  
+  class_decl =
+    {extends}
+      [cls]:class identifier extends [parent]:identifier
+      lbrace [variables]:variable_declaration* [methods]:method_declaration* rbrace
+    {-> New class_decl.extends(identifier, parent, [variables], [methods]) }
+    | {simple}
+      [cls]:class identifier
+      lbrace [variables]:variable_declaration* [methods]:method_declaration* rbrace
+    {-> New class_decl.simple(identifier, [variables], [methods]) };
+    
+  variable_declaration =
+      type identifier semicolon
+    {-> New variable_declaration(type, identifier) };
+
+  return_stm {-> expression } =
+      return expression semicolon
+    {-> expression };
+
+  method_declaration =
+      public type identifier lparen [formals]:param_list rparen
+      lbrace [locals]:variable_declaration* [statements]:statement* return_stm rbrace
+    {-> New method_declaration(type, identifier, [formals.formal_parameter],
+                               [locals], [statements], return_stm.expression) };
+
+  formal_parameter =
+    type identifier;
+
+  param_list {-> formal_parameter* } =
+    {list}
+      [param]:formal_parameter [rest]:param_list_tail*
+    {-> [param, rest.formal_parameter] }
+    | {empty}
+    {-> [] };
+
+  param_list_tail {-> formal_parameter} =
+    comma formal_parameter {-> formal_parameter };
+
+  type =
+      {int}        [t]:int                   {-> New type.int(t) }
+    | {boolean}    [t]:boolean               {-> New type.boolean(t) }
+    | {int_array}  [t]:int lbracket rbracket {-> New type.int_array(t) }
+    | {identifier} [t]:identifier            {-> New type.identifier(t) };
+
+  statement =
+    {block}
+      lbrace statement* rbrace
+    {-> New statement.block([statement]) }
+    | {if}
+      if lparen [condition]:expression rparen
+      [if_true]:statement else [if_false]:statement
+    {-> New statement.if(condition, if_true, if_false) }
+    | {while}
+      while lparen [condition]:expression rparen [body]:statement
+    {-> New statement.while(condition, body) }
+    | {println}
+      print lparen expression rparen semicolon
+    {-> New statement.println(expression) }
+    | {assign}
+      identifier assign expression semicolon
+    {-> New statement.assign(identifier, expression) }
+    | {array_assign}
+      identifier lbracket [index]:expression rbracket
+      assign [value]:expression semicolon
+    {-> New statement.array_assign(identifier, index, value) };
+
+  // Binary expression, split up by precendence
+  bin_r1_exp {-> expression } =
+    {and}
+      [left]:bin_r2_exp and [right]:bin_r2_exp
+    {-> New expression.and(left.expression, right.expression) }
+    | {exp} [exp]:bin_r2_exp {-> exp.expression };
+
+  bin_r2_exp {-> expression } =
+    {less_than}
+      [left]:bin_r3_exp less [right]:bin_r3_exp
+    {-> New expression.less_than(left.expression, right.expression) }
+    | {exp} [exp]:bin_r3_exp {-> exp.expression };
+
+  bin_r3_exp {-> expression } =
+    {plus}
+      [left]:bin_r4_exp plus [right]:bin_r4_exp
+    {-> New expression.plus(left.expression, right.expression) }
+    | {minus}
+      [left]:bin_r4_exp minus [right]:bin_r4_exp
+    {-> New expression.minus(left.expression, right.expression) }
+    | {exp} [exp]:bin_r4_exp {-> exp.expression };
+
+  bin_r4_exp {-> expression } =
+    {times}
+      [left]:unary_r1_exp mult [right]:unary_r1_exp
+    {-> New expression.times(left.expression, right.expression) }
+    | {exp} [exp]:unary_r1_exp {-> exp.expression };
+
+  // Unary expressions, in reverse order of precedence
+  unary_r1_exp {-> expression } =
+    {not}
+      not [exp]:unary_r2_exp
+    {-> New expression.not(exp.expression) }
+    | {exp} [exp]:unary_r2_exp {-> exp.expression };
+
+  unary_r2_exp {-> expression } =
+    {call}
+      [subject]:unary_r3_exp dot [method]:identifier lparen [params]:expression_list rparen
+    {-> New expression.call(subject.expression, method, [params.expression]) }
+    | {exp} [exp]:unary_r3_exp {-> exp.expression};
+
+  unary_r3_exp {-> expression } =
+    {array_length}
+      [exp]:unary_r4_exp dot length
+    {-> New expression.array_length(exp.expression) }
+    | {exp} [exp]:unary_r4_exp {-> exp.expression };
+
+  unary_r4_exp {-> expression } =
+    {array_lookup}
+      [array]:unary_r4_exp lbracket [index]:expression rbracket
+    {-> New expression.array_lookup(array.expression, index) }
+    | {new_array}
+      new type lbracket [size]:expression rbracket
+    {-> New expression.new_array(size) }
+    | {new_object}
+      new identifier lparen rparen
+    {-> New expression.new_object(identifier) }
+    | {integer}
+      [v]:integer_literal
+    {-> New expression.integer(v) }
+    | {true}
+      [v]:true
+    {-> New expression.true(v) }
+    | {false}
+      [v]:false
+    {-> New expression.false(v) }
+    | {identifier}
+      identifier
+    {-> New expression.identifier(identifier) }
+    | {this}
+      [v]:this
+    {-> New expression.this(v) }
+    | {paren_exp}
+      lparen [exp]:expression rparen
+    {-> exp };
+
+  expression = bin_r1_exp {-> bin_r1_exp.expression };
+
+  expression_list {-> expression* } =
+    {list}
+      [exp]:expression [rest]:expression_list_tail*
+    {-> [exp, rest.expression] }
+    | {empty}
+    {-> [] };
+  
+  expression_list_tail {-> expression } =
+    comma expression {-> expression };
+
+
+Abstract Syntax Tree
+  program =
+      [main_class]:main_class
+      [class_decl]:class_decl*;
+
+  main_class =
+      [name]:identifier
+      [method_parameter]:identifier
+      [statement]:statement;
+
+  class_decl =
+      {extends}
+        [name]:identifier
+        [parent]:identifier
+        [variables]:variable_declaration*
+        [methods]:method_declaration* |
+      {simple}
+        [name]:identifier
+        [variables]:variable_declaration*
+        [methods]:method_declaration*;
+
+  method_declaration =
+      [return_type]:type
+      [name]:identifier
+      [formals]:formal_parameter*
+      [locals]:variable_declaration*
+      [statements]:statement*
+      [return_expression]:expression;
+
+  variable_declaration =
+      [type]:type
+      [name]:identifier;
+
+  formal_parameter =
+      [type]:type
+      [name]:identifier;
+
+  type =
+      {int}
+        [name]:int |
+      {int_array}
+        [name]:int |
+      {boolean}
+        [name]:boolean |
+      {identifier}
+        [name]:identifier;
+
+  statement =
+      {block}
+        [statements]:statement* |
+      {if}
+        [condition]:expression
+        [true_statement]:statement
+        [false_statement]:statement |
+      {while}
+        [condition]:expression
+        [statement]:statement |
+      {println}
+        [value]:expression |
+      {assign}
+        [name]:identifier
+        [value]:expression |
+      {array_assign}
+        [name]:identifier
+        [index]:expression
+        [value]:expression;
+
+  expression =
+      {and}
+        [left]:expression
+        [right]:expression |
+      {less_than}
+        [left]:expression
+        [right]:expression |
+      {plus}
+        [left]:expression
+        [right]:expression |
+      {minus}
+        [left]:expression
+        [right]:expression |
+      {times}
+        [left]:expression
+        [right]:expression |
+      {array_lookup}
+        [array]:expression
+        [index]:expression |
+      {array_length}
+        [array]:expression |
+      {call}
+        [instance]:expression
+        [name]:identifier
+        [actuals]:expression* |
+      {integer}
+        [value]:integer_literal |
+      {true}
+        true |
+      {false}
+        false |
+      {identifier}
+        [name]:identifier |
+      {this}
+        this |
+      {new_array}
+        [size]:expression |
+      {new_object}
+        [class_name]:identifier |
+      {not}
+        [expression]:expression;
+
+  identifier =
+    [name]: id;

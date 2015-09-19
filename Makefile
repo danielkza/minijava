@@ -1,17 +1,32 @@
-MiniJava.class: minijava/lexer/Lexer.java MiniJava.java
+CLASSDIR := build
 
-run: MiniJava.class
-	java MiniJava
+SRCS = MiniJava.java $(wildcard minijava/**/*.java visitor/*.java)
+OBJS = $(addprefix $(CLASSDIR)/,$(patsubst %.java,%.class,$(SRCS)))
 
-minijava/lexer/Lexer.java: MiniJava.sablecc
+.PHONY: all run clean classes
 
-%.class: %.java
-	javac $<
+all: classes
+	$(MAKE) classes
 
-%.java: %.sablecc
-	sablecc $<
+run: all
+	java -classpath $(CLASSDIR)/ MiniJava
 
-.PHONY: clean
+MiniJava.java: minijava/lexer/Lexer.java
+
+minijava/lexer/Lexer.java: MiniJava.sablecc | $(CLASSDIR)
+	sablecc $?
+	cp -f --parents minijava/lexer/lexer.dat minijava/parser/parser.dat $(CLASSDIR)/
+
+$(CLASSDIR):
+	mkdir -p $@/
+
+$(OBJS): $(CLASSDIR)/%.class: %.java | $(CLASSDIR)
+	echo $?
+	javac -d $(CLASSDIR) $?
+
+classes: $(OBJS)
+
 clean:
-	rm -f minijava.java
-	rm -f minijava/parser minijava/lexer minijava/analysis
+	rm -rf $(CLASSDIR)/
+	rm -rf minijava/analysis minijava/lexer minijava/node minijava/parser
+

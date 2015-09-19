@@ -2,4 +2,5 @@
 /minijava/analysis/
 /minijava/lexer/
 /minijava/node/
-/minijava/parser
+/minijava/parser/
+/build/
