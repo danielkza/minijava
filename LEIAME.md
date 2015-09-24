@@ -3,8 +3,18 @@
 
 ## Para compilar:
 
-make
+make all
 
 ## Para rodar:
 
-make run < arquivo
+./run.sh arquivo
+
+ou
+
+./run.sh < arquivo
+
+Um arquivo de exemplo com erros de tipos se encontra em programs/TypeErrorTest.java
+
+## Para limpar:
+
+make clean

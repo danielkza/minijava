@@ -85,14 +85,14 @@ Productions
 
   identifier = id;
 
-  string_array =  string lbracket rbracket;
+  string_array = string lbracket rbracket;
 
   main_method {-> identifier statement } =
       public static void main
       lparen string_array [args_var]:identifier rparen
       lbrace statement rbrace
     {-> args_var statement };
-  
+
   class_decl =
     {extends}
       [cls]:class identifier extends [parent]:identifier
@@ -102,7 +102,7 @@ Productions
       [cls]:class identifier
       lbrace [variables]:variable_declaration* [methods]:method_declaration* rbrace
     {-> New class_decl.simple(identifier, [variables], [methods]) };
-    
+
   variable_declaration =
       type identifier semicolon
     {-> New variable_declaration(type, identifier) };
@@ -161,28 +161,28 @@ Productions
   // Binary expression, split up by precendence
   bin_r1_exp {-> expression } =
     {and}
-      [left]:bin_r2_exp and [right]:bin_r2_exp
+      [left]:bin_r2_exp and [right]:bin_r1_exp
     {-> New expression.and(left.expression, right.expression) }
     | {exp} [exp]:bin_r2_exp {-> exp.expression };
 
   bin_r2_exp {-> expression } =
     {less_than}
-      [left]:bin_r3_exp less [right]:bin_r3_exp
+      [left]:bin_r3_exp less [right]:bin_r2_exp
     {-> New expression.less_than(left.expression, right.expression) }
     | {exp} [exp]:bin_r3_exp {-> exp.expression };
 
   bin_r3_exp {-> expression } =
     {plus}
-      [left]:bin_r4_exp plus [right]:bin_r4_exp
+      [left]:bin_r4_exp plus [right]:bin_r3_exp
     {-> New expression.plus(left.expression, right.expression) }
     | {minus}
-      [left]:bin_r4_exp minus [right]:bin_r4_exp
+      [left]:bin_r4_exp minus [right]:bin_r3_exp
     {-> New expression.minus(left.expression, right.expression) }
     | {exp} [exp]:bin_r4_exp {-> exp.expression };
 
   bin_r4_exp {-> expression } =
     {times}
-      [left]:unary_r1_exp mult [right]:unary_r1_exp
+      [left]:unary_r1_exp mult [right]:bin_r4_exp
     {-> New expression.times(left.expression, right.expression) }
     | {exp} [exp]:unary_r1_exp {-> exp.expression };
 
@@ -242,10 +242,9 @@ Productions
     {-> [exp, rest.expression] }
     | {empty}
     {-> [] };
-  
+
   expression_list_tail {-> expression } =
     comma expression {-> expression };
-
 
 Abstract Syntax Tree
   program =

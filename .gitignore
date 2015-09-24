@@ -4,3 +4,7 @@
 /minijava/node/
 /minijava/parser/
 /build/
+/out/
+
+*.iml
+/.idea/
