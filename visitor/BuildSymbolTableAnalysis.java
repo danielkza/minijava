@@ -1,6 +1,8 @@
 package visitor;
 
 import minijava.node.*;
+import symbol.Method;
+import symbol.Symbol;
 
 import java.util.*;
 

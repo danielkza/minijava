@@ -1,6 +1,6 @@
 CLASSDIR := build
 
-SRCS = MiniJava.java $(wildcard minijava/**/*.java visitor/*.java)
+SRCS = $(wildcard *.java minijava/**/*.java frame/**/*.java symbol/**/*.java visitor/**/*.java)
 OBJS = $(addprefix $(CLASSDIR)/,$(patsubst %.java,%.class,$(SRCS)))
 
 .PHONY: all run clean classes
@@ -9,7 +9,7 @@ all: classes
 	$(MAKE) classes
 
 run: all
-	java -classpath $(CLASSDIR)/ MiniJava
+	java -classpath $(CLASSDIR)/ FrameMain
 
 MiniJava.java: minijava/lexer/Lexer.java
 

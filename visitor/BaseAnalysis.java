@@ -11,6 +11,7 @@ import minijava.analysis.DepthFirstAdapter;
 import minijava.node.Node;
 import minijava.node.PType;
 import minijava.node.Token;
+import symbol.*;
 
 abstract class BaseAnalysis extends DepthFirstAdapter
 {
@@ -35,7 +36,7 @@ abstract class BaseAnalysis extends DepthFirstAdapter
     }
 
     protected SymbolTable symbolTable;
-    protected Class currClass;
+    protected ClassS currClass;
     protected Method currMethod;
 
     protected PrintStream outStream;
@@ -52,11 +53,11 @@ abstract class BaseAnalysis extends DepthFirstAdapter
         return symbolTable;
     }
 
-    public Class getCurrClass() {
+    public ClassS getCurrClass() {
         return currClass;
     }
 
-    public void setCurrClass(Class currClass) {
+    public void setCurrClass(ClassS currClass) {
         this.currClass = currClass;
     }
 

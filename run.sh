@@ -1,2 +1,2 @@
 #!/bin/sh
-exec java -cp build/ MiniJava "$@"
+exec java -cp build/ FrameMain "$@"

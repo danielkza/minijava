@@ -1,6 +1,7 @@
 package visitor;
 
 import minijava.node.*;
+import symbol.*;
 
 public class TypeCheckExpAnalysis extends BaseAnalysis {
     protected PType type;
@@ -136,7 +137,7 @@ public class TypeCheckExpAnalysis extends BaseAnalysis {
         }
 
         String className = ((AIdentifierType) type).getName().toString();
-        Class cls = symbolTable.getClass(className);
+        ClassS cls = symbolTable.getClass(className);
         Method method = cls.getMethodInHierarchy(methodName);
 
         if(method == null) {
@@ -189,7 +190,7 @@ public class TypeCheckExpAnalysis extends BaseAnalysis {
     @Override
     public void caseANewObjectExpression(ANewObjectExpression node) {
         String className = node.getClassName().toString();
-        Class cls = symbolTable.getClass(className);
+        ClassS cls = symbolTable.getClass(className);
 
         if(cls == null) {
             reportError(node, "Unknown class %s", className);

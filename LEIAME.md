@@ -1,4 +1,4 @@
-# Tarefa 3 - Compiladores
+# Tarefa 5 - Compiladores
 # Daniel Q. Miranda - NUSP 7577406
 
 ## Para compilar:
@@ -7,13 +7,11 @@ make all
 
 ## Para rodar:
 
-./run.sh arquivo
+make run
 
 ou
 
-./run.sh < arquivo
-
-Um arquivo de exemplo com erros de tipos se encontra em programs/TypeErrorTest.java
+./run.sh
 
 ## Para limpar:
 

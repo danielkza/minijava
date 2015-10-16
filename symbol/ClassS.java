@@ -1,0 +1,144 @@
+package symbol;
+
+import minijava.node.PType;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+public class ClassS extends Symbol {
+    private Map<String, Method> methods;
+    private Map<String, Variable> globals;
+
+    private String parent;
+    private ClassS parentClass;
+
+    public ClassS(String id, String parent, SymbolTable symbolTable) {
+        super(cleanId(id), identifierType(id), symbolTable);
+
+        if (parent != null)
+            parent = cleanId(parent);
+
+        this.parent = parent;
+        methods = new HashMap<>();
+        globals = new HashMap<>();
+    }
+
+    public boolean addMethod(String id, PType type) {
+        id = cleanId(id);
+
+        if (methods.containsKey(id))
+            return false;
+
+        methods.put(id, new Method(id, type, this));
+        return true;
+    }
+
+    public Method getMethod(String id) {
+        return methods.get(cleanId(id));
+    }
+
+    public boolean containsMethod(String id) {
+        return methods.containsKey(cleanId(id));
+    }
+
+    public Map<String, Method> getMethods() {
+        return Collections.unmodifiableMap(methods);
+    }
+
+
+    public Method getMethodInHierarchy(String id) {
+        id = cleanId(id);
+
+        ClassS curClass = this;
+        while(curClass != null) {
+            Method method = curClass.getMethod(id);
+            if(method != null)
+                return method;
+
+            curClass = curClass.getParentClass();
+        }
+
+        return null;
+    }
+
+    public boolean addVar(String id, PType type) {
+        id = cleanId(id);
+
+        if (globals.containsKey(id))
+            return false;
+
+        globals.put(id, new Variable(id, type, this));
+        return true;
+    }
+
+    public Variable getVar(String id) {
+        return globals.get(cleanId(id));
+    }
+
+    public boolean containsVar(String id) {
+        return globals.containsKey(cleanId(id));
+    }
+
+    public String getParent() {
+        return parent;
+    }
+
+    public ClassS getParentClass() {
+        if(parent == null)
+            return null;
+
+        if(parentClass == null) {
+            parentClass = getSymbolTable().getClass(parent);
+            if(parentClass == null) {
+                String message = String.format(
+                    "Attempted to get parent class '%s', but it was not defined on the symbol table",
+                    parent);
+
+                throw new RuntimeException(message);
+            }
+        }
+
+        return parentClass;
+    }
+
+    public Variable getIdentifier(String id) {
+        id = cleanId(id);
+
+        ClassS curClass = this;
+        while(curClass != null) {
+          Variable var = curClass.getVar(id);
+          if(var != null)
+              return var;
+
+          curClass = curClass.getParentClass();
+        }
+
+        return null;
+    }
+
+    public boolean isCompatibleWith(ClassS other) {
+        ClassS curClass = this;
+        while(curClass != null) {
+            if(curClass.equals(other))
+                return true;
+
+            curClass = curClass.getParentClass();
+        }
+
+        return false;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder result = new StringBuilder();
+
+        result.append("class "); result.append(getId()); result.append(" {\n");
+        for(Method method : methods.values()) {
+            result.append(method); result.append('\n');
+        }
+        result.append('}');
+
+        return result.toString();
+    }
+}

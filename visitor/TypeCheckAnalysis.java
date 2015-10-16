@@ -1,6 +1,9 @@
 package visitor;
 
 import minijava.node.*;
+import symbol.Method;
+import symbol.Symbol;
+import symbol.Variable;
 
 public class TypeCheckAnalysis extends BaseAnalysis {
     private TypeCheckExpAnalysis expChecker;
