@@ -1,4 +1,4 @@
-# Tarefa 5 - Compiladores
+# Tarefa 6 - Compiladores
 # Daniel Q. Miranda - NUSP 7577406
 
 ## Para compilar:

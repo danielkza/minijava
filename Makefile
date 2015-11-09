@@ -15,7 +15,9 @@ MiniJava.java: minijava/lexer/Lexer.java
 
 minijava/lexer/Lexer.java: MiniJava.sablecc | $(CLASSDIR)
 	sablecc $?
-	cp -f --parents minijava/lexer/lexer.dat minijava/parser/parser.dat $(CLASSDIR)/
+	mkdir -p $(CLASSDIR)/minijava/lexer $(CLASSDIR)/minijava/parser
+	cp -f minijava/lexer/lexer.dat $(CLASSDIR)/minijava/lexer/
+	cp -f minijava/parser/parser.dat $(CLASSDIR)/minijava/parser/
 
 $(CLASSDIR):
 	mkdir -p $@/
