@@ -11,16 +11,15 @@ public class SymbolTable {
         classes = new HashMap<>();
     }
 
-    public boolean addClass(String id, String parent) {
+    public boolean addClass(String id, String parentName) {
         id = Symbol.cleanId(id);
-
-        if (parent != null)
-            parent = Symbol.cleanId(parent);
-
         if (classes.containsKey(id))
             return false;
+        
+        if (parentName != null)
+            parentName = Symbol.cleanId(parentName);
 
-        ClassS cls = new ClassS(id, parent, this);
+        ClassS cls = new ClassS(id, parentName, this);
         classes.put(id, cls);
         return true;
     }
@@ -28,7 +27,11 @@ public class SymbolTable {
     public ClassS getClass(String id) {
         return classes.get(Symbol.cleanId(id));
     }
-
+    
+    public Map<String, ClassS> getClasses() {
+        return Collections.unmodifiableMap(classes);
+    }
+    
     public boolean containsClass(String id) {
         return classes.containsKey(Symbol.cleanId(id));
     }

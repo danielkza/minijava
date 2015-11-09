@@ -9,6 +9,7 @@ public abstract class Symbol {
     private String id;
     private PType type;
     private SymbolTable symbolTable;
+    private Symbol parent;
 
     public static String cleanId(String id) {
         return id.replaceAll("\\s+", "");
@@ -22,10 +23,14 @@ public abstract class Symbol {
         this.id = id;
         this.symbolTable = symbolTable;
         this.type = type;
+        this.parent = null;
     }
 
     public Symbol(String id, PType type, Symbol parent) {
-        this(id, type, parent.getSymbolTable());
+        this.id = id;
+        this.symbolTable = parent.getSymbolTable();
+        this.type = type;
+        this.parent = parent;
     }
 
     public String getId() {
@@ -38,5 +43,9 @@ public abstract class Symbol {
 
     public SymbolTable getSymbolTable() {
         return symbolTable;
+    }
+    
+    public Symbol getParent() {
+        return parent;
     }
 }

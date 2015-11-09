@@ -1,8 +1,12 @@
 package visitor;
 
+import minijava.node.Node;
+import minijava.node.Token;
+
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class Input {
     static class Line {
@@ -19,6 +23,7 @@ public class Input {
     private String filePath;
     private String content;
     private List<Line> linePositions = new ArrayList<>();
+    private Map<Node, Token> startTokens = null;
 
     public Input(String filePath, InputStream inputStream) throws IOException {
         this.filePath = filePath;
@@ -45,7 +50,7 @@ public class Input {
         }
     }
 
-    public Input(String fileName) throws FileNotFoundException, IOException {
+    public Input(String fileName) throws IOException {
         this(fileName, new FileInputStream(fileName));
     }
 
@@ -53,8 +58,21 @@ public class Input {
         return new StringReader(content);
     }
 
-    public void printMessageForLine(PrintStream outputStream, int line, int pos,
+    public void setStartTokens(Map<Node, Token> startTokens) {
+        this.startTokens = startTokens;
+    }
+    
+    public void printMessageForNode(PrintStream outputStream, Node node,
                                     String message) {
+        Token token;
+        if(node instanceof Token)
+            token = (Token)node;
+        else
+            token = startTokens.get(node);
+        
+        int line = token.getLine();
+        int pos = token.getPos();
+        
         outputStream.format("%s:%d: %s", fileName, line, message);
         outputStream.println();
 
@@ -71,5 +89,20 @@ public class Input {
         }
 
         outputStream.println();
+    }
+    
+    public String line(int line) {
+        Line linePos = linePositions.get(line - 1);
+        return content.substring(linePos.start, linePos.end);
+    }
+    
+    public String nodeLine(Node node) {
+        Token token;
+        if(node instanceof Token)
+            token = (Token)node;
+        else
+            token = startTokens.get(node);
+        
+        return line(token.getLine());
     }
 }

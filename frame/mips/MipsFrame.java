@@ -6,8 +6,66 @@ import frame.*;
 import symbol.Symbol;
 
 public class MipsFrame extends Frame {
-    public static final int WORD_SIZE = 4;
     private static Map<String, Integer> functions = new HashMap<>();
+
+    static final int WORD_SIZE = 4;
+    
+    private static Temp reg(final String name) {
+        return new Temp() {
+            @Override
+            public String toString() {
+                return name;
+            }
+        };
+    }
+    
+    static final Temp
+        ZERO = reg("$0"), // zero reg
+        AT = reg("$at"), // reserved for assembler
+        V0 = reg("$v0"), // function result
+        V1 = reg("$v1"), // second function result
+        A0 = reg("$a0"), // argument1
+        A1 = reg("$a1"), // argument2
+        A2 = reg("$a2"), // argument3
+        A3 = reg("$a3"), // argument4
+        T0 = reg("$t0"), // caller-saved
+        T1 = reg("$t1"),
+        T2 = reg("$t2"),
+        T3 = reg("$t3"),
+        T4 = reg("$t4"),
+        T5 = reg("$t5"),
+        T6 = reg("$t6"),
+        T7 = reg("$t7"),
+        S0 = reg("$s0"), // callee-saved
+        S1 = reg("$s1"),
+        S2 = reg("$s2"),
+        S3 = reg("$s3"),
+        S4 = reg("$s4"),
+        S5 = reg("$s5"),
+        S6 = reg("$s6"),
+        S7 = reg("$s7"),
+        T8 = reg("$t8"), // caller-saved
+        T9 = reg("$t9"),
+        K0 = reg("$k0"), // reserved for OS kernel
+        K1 = reg("$k1"), // reserved for OS kernel
+        GP = reg("$gp"), // pointer to global area
+        SP = reg("$sp"), // stack pointer
+        S8 = reg("$fp"), // callee-save (frame pointer)
+        RA = reg("$ra"); // return address
+
+    // Register lists: must not overlap and must include every register that
+    // might show up in code
+    static final Temp[]
+        // registers dedicated to special purposes
+        specialRegs = { ZERO, AT, K0, K1, GP, SP },
+        // registers to pass outgoing arguments
+        argRegs = { A0, A1, A2, A3 },
+        // registers that a callee must preserve for its caller
+        calleeSaves = { RA, S0, S1, S2, S3, S4, S5, S6, S7, S8 },
+        // registers that a callee may use without preserving
+        callerSaves = { T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, V0, V1 };
+    
+    static final Temp FP = new Temp(); // virtual frame pointer (eliminated)
 
     private int offset = 0;
     private List<Access> actuals;
@@ -28,7 +86,6 @@ public class MipsFrame extends Frame {
         functions.put(name, count);
 
         Iterator<Boolean> escapes = formalsEscapes.iterator();
-
         if(!escapes.hasNext())
             return;
 
@@ -50,7 +107,6 @@ public class MipsFrame extends Frame {
                 offset += WORD_SIZE;
         }
 
-        // Tratar o resto dos argumentos
         while (escapes.hasNext()) {
             this.formals.add(allocLocal(escapes.next()));
             actuals.add(new InFrame(offset));
@@ -70,6 +126,17 @@ public class MipsFrame extends Frame {
         return new MipsFrame(name, formals);
     }
 
+    @Override
+    public int getOffset() {
+        return offset;
+    }
+
+    @Override
+    public void setOffset(int offset) {
+        this.offset = offset;
+    }
+
+    @Override
     public Access allocLocal(boolean escape) {
         if (escape) {
             Access result = new InFrame(offset);
@@ -80,103 +147,19 @@ public class MipsFrame extends Frame {
         }
     }
 
-    static final Temp
-        ZERO = new Temp(), // zero reg
-        AT = new Temp(), // reserved for assembler
-        V0 = new Temp(), // function result
-        V1 = new Temp(), // second function result
-        A0 = new Temp(), // argument1
-        A1 = new Temp(), // argument2
-        A2 = new Temp(), // argument3
-        A3 = new Temp(), // argument4
-        T0 = new Temp(), // caller-saved
-        T1 = new Temp(),
-        T2 = new Temp(),
-        T3 = new Temp(),
-        T4 = new Temp(),
-        T5 = new Temp(),
-        T6 = new Temp(),
-        T7 = new Temp(),
-        S0 = new Temp(), // callee-saved
-        S1 = new Temp(),
-        S2 = new Temp(),
-        S3 = new Temp(),
-        S4 = new Temp(),
-        S5 = new Temp(),
-        S6 = new Temp(),
-        S7 = new Temp(),
-        T8 = new Temp(), // caller-saved
-        T9 = new Temp(),
-        K0 = new Temp(), // reserved for OS kernel
-        K1 = new Temp(), // reserved for OS kernel
-        GP = new Temp(), // pointer to global area
-        SP = new Temp(), // stack pointer
-        S8 = new Temp(), // callee-save (frame pointer)
-        RA = new Temp(); // return address
+    @Override public Temp FP() { return FP; }
+    @Override public Temp RV() { return V0; }
+    @Override public Access FPaccess() { return new InReg(FP); }
+    @Override public Access RVaccess() { return new InReg(V0); }
+    
+    public Temp getArgReg(int i) {
+        if(i < argRegs.length)
+            return argRegs[i];
 
-    // Register lists: must not overlap and must include every register that
-    // might show up in code
-    private static final Temp[]
-        // registers dedicated to special purposes
-        specialRegs = { ZERO, AT, K0, K1, GP, SP },
-        // registers to pass outgoing arguments
-        argRegs = { A0, A1, A2, A3 },
-        // registers that a callee must preserve for its caller
-        calleeSaves = { RA, S0, S1, S2, S3, S4, S5, S6, S7, S8 },
-        // registers that a callee may use without preserving
-        callerSaves = { T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, V0, V1 };
-
-    private static final Map<Temp, String> tempMap;
-    private static final Map<String, String> regnameMap;
-
-    static {
-        tempMap = new HashMap<>(32);
-        tempMap.put(ZERO, "$0");
-        tempMap.put(AT,   "$at");
-        tempMap.put(V0,   "$v0");
-        tempMap.put(V1,   "$v1");
-        tempMap.put(A0,   "$a0");
-        tempMap.put(A1,   "$a1");
-        tempMap.put(A2,   "$a2");
-        tempMap.put(A3,   "$a3");
-        tempMap.put(T0,   "$t0");
-        tempMap.put(T1,   "$t1");
-        tempMap.put(T2,   "$t2");
-        tempMap.put(T3,   "$t3");
-        tempMap.put(T4,   "$t4");
-        tempMap.put(T5,   "$t5");
-        tempMap.put(T6,   "$t6");
-        tempMap.put(T7,   "$t7");
-        tempMap.put(S0,   "$s0");
-        tempMap.put(S1,   "$s1");
-        tempMap.put(S2,   "$s2");
-        tempMap.put(S3,   "$s3");
-        tempMap.put(S4,   "$s4");
-        tempMap.put(S5,   "$s5");
-        tempMap.put(S6,   "$s6");
-        tempMap.put(S7,   "$s7");
-        tempMap.put(T8,   "$t8");
-        tempMap.put(T9,   "$t9");
-        tempMap.put(K0,   "$k0");
-        tempMap.put(K1,   "$k1");
-        tempMap.put(GP,   "$gp");
-        tempMap.put(SP,   "$sp");
-        tempMap.put(S8,   "$fp");
-        tempMap.put(RA,   "$ra");
-
-        regnameMap = new HashMap<>(32);
-        for(Map.Entry<Temp, String> entry : tempMap.entrySet())
-            regnameMap.put(entry.getKey().toString(), entry.getValue());
+        return null;
     }
 
-    public String tempMap(Temp temp) {
-        return tempMap.get(temp);
-    }
 
-    private String regName(String reg) {
-        String regName = regnameMap.get(reg);
-        return regName != null ? regName : reg;
-    }
 
     public String toString() {
         String txt = "--------------------\nFrame: " + label + "\nformals\tactuals\n";
@@ -184,11 +167,50 @@ public class MipsFrame extends Frame {
         for (int i = 0; i < formals.size(); i++) {
             String f = formals.get(i).toString();
             String a = actuals.get(i).toString();
-            txt += regName(f) + "\t" + regName(a) + "\n";
+            txt += f + "\t" + a + "\n";
         }
 
         txt += "--------------------\n";
 
         return txt;
+    }
+    
+    
+
+    @Override
+    public String programEpilogue() {
+        return
+        "         .text            \n" +
+        "         .globl _halloc   \n" +
+        "_halloc:                  \n" +
+        "         li $v0, 9        \n" +
+        "         syscall          \n" +
+        "         j $ra            \n" +
+        "                          \n" +
+        "         .text            \n" +
+        "         .globl _printint \n" +
+        "_printint:                \n" +
+        "         li $v0, 1        \n" +
+        "         syscall          \n" +
+        "         la $a0, newl     \n" +
+        "         li $v0, 4        \n" +
+        "         syscall          \n" +
+        "         j $ra            \n" +
+        "                          \n" +
+        "         .data            \n" +
+        "         .align   0       \n" +
+        "newl:    .asciiz \"\\n\"  \n" +
+        "         .data            \n" +
+        "         .align   0       \n" +
+        "str_er:  .asciiz \" ERROR: abnormal termination\\n\" "+
+        "                          \n" +
+        "         .text            \n" +
+        "         .globl _error    \n" +
+        "_error:                   \n" +
+        "         li $v0, 4        \n" +
+        "         la $a0, str_er   \n" +
+        "         syscall          \n" +
+        "         li $v0, 10       \n" +
+        "         syscall          \n" ;
     }
 }

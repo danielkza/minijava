@@ -5,26 +5,40 @@ import symbol.Method;
 import symbol.Symbol;
 import symbol.Variable;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class TypeCheckAnalysis extends BaseAnalysis {
     private TypeCheckExpAnalysis expChecker;
-
-    public TypeCheckAnalysis() {
-        super();
-    }
+    private Map<PExpression, PType> types = new HashMap<>();
 
     public TypeCheckAnalysis(BuildSymbolTableAnalysis analysis) {
         analysis.prepareChild(this);
     }
 
+    public Map<PExpression, PType> getTypes() {
+        return types;
+    }
+    
     public TypeCheckExpAnalysis getExpChecker() {
         if(expChecker == null) {
-            expChecker = new TypeCheckExpAnalysis(this);
+            expChecker = new TypeCheckExpAnalysis(this, types);
         }
 
-        expChecker.setCurrClass(currClass);
-        expChecker.setCurrMethod(currMethod);
+        expChecker.setCurrentClass(currentClass);
+        expChecker.setCurrentMethod(currentMethod);
 
         return expChecker;
+    }
+    
+    private PType typeCheck(PExpression expr) {
+        TypeCheckExpAnalysis expChecker = getExpChecker();
+        expr.apply(expChecker);
+        
+        PType type = expChecker.getType();
+        types.put(expr, type);
+        
+        return type;
     }
 
     @Override
@@ -36,9 +50,9 @@ public class TypeCheckAnalysis extends BaseAnalysis {
     @Override
     public void caseAMainClass(AMainClass node) {
         String className = node.getName().toString();
-        currClass = symbolTable.getClass(className);
+        currentClass = symbolTable.getClass(className);
 
-        Method mainMethod = currClass.getMethod("main");
+        Method mainMethod = currentClass.getMethod("main");
         startMethod(mainMethod, true);
 
         node.getMethodParameter().apply(this);
@@ -46,44 +60,41 @@ public class TypeCheckAnalysis extends BaseAnalysis {
 
         endMethod(mainMethod);
 
-        currClass = null;
+        currentClass = null;
     }
 
     @Override
     public void caseASimpleClassDecl(ASimpleClassDecl node) {
         String className = node.getName().toString();
-        currClass = symbolTable.getClass(className);
+        currentClass = symbolTable.getClass(className);
 
         applyAll(node.getMethods());
 
-        currClass = null;
+        currentClass = null;
     }
 
     @Override
     public void caseAExtendsClassDecl(AExtendsClassDecl node) {
         String className = node.getName().toString();
-        currClass = symbolTable.getClass(className);
+        currentClass = symbolTable.getClass(className);
 
         applyAll(node.getMethods());
 
-        currClass = null;
+        currentClass = null;
     }
 
     @Override
     public void caseAMethodDeclaration(AMethodDeclaration node) {
-        Method method = currClass.getMethod(node.getName().toString());
+        Method method = currentClass.getMethod(node.getName().toString());
         startMethod(method, false);
 
         applyAll(node.getStatements());
 
-        TypeCheckExpAnalysis expChecker = getExpChecker();
-        node.getReturnExpression().apply(expChecker);
-
-        PType retExpType = expChecker.getType();
+        PType retExpType = typeCheck(node.getReturnExpression());
         if(!symbolTable.compareTypes(node.getReturnType(), retExpType)) {
             reportError(node.getReturnExpression(),
                         "Type mismatch in return statement: found %s, expected %s (in method %s::%s)",
-                        retExpType, node.getReturnType(), currClass.getId(), currMethod.getId());
+                        retExpType, node.getReturnType(), currentClass.getId(), currentMethod.getId());
         }
 
         endMethod(method);
@@ -91,11 +102,7 @@ public class TypeCheckAnalysis extends BaseAnalysis {
 
     @Override
     public void caseAIfStatement(AIfStatement node) {
-        TypeCheckExpAnalysis expChecker = getExpChecker();
-
-        node.getCondition().apply(expChecker);
-        PType conditionType = expChecker.getType();
-
+        PType conditionType = typeCheck(node.getCondition());
         if (!(conditionType instanceof ABooleanType)) {
             reportError(node.getCondition(), "Type mismatch in if statement condition: found %s, expected boolean",
                         conditionType);
@@ -107,9 +114,7 @@ public class TypeCheckAnalysis extends BaseAnalysis {
 
     @Override
     public void caseAWhileStatement(AWhileStatement node) {
-        TypeCheckExpAnalysis expChecker = getExpChecker();
-        node.getCondition().apply(expChecker);
-        PType conditionType = expChecker.getType();
+        PType conditionType = typeCheck(node.getCondition());
         if (!(conditionType instanceof ABooleanType)) {
             reportError(node.getCondition(), "Type mismatch in while loop condition: found %s, expected boolean",
                         conditionType);
@@ -120,9 +125,7 @@ public class TypeCheckAnalysis extends BaseAnalysis {
 
     @Override
     public void caseAPrintlnStatement(APrintlnStatement node) {
-        TypeCheckExpAnalysis expChecker = getExpChecker();
-        node.getValue().apply(expChecker);
-        PType valueType = expChecker.getType();
+        PType valueType = typeCheck(node.getValue());
         if (!(valueType instanceof AIntType)) {
             reportError(node.getValue(), "Type mismatch in print statement: found %s, expected int",
                         valueType);
@@ -132,14 +135,11 @@ public class TypeCheckAnalysis extends BaseAnalysis {
     @Override
     public void caseAAssignStatement(AAssignStatement node) {
         String varName = node.getName().toString();
-        Variable variable = currMethod.getIdentifier(varName);
+        Variable variable = currentMethod.getIdentifier(varName);
         if(variable == null) {
             reportError(node.getName(), "Undefined variable %s in assignment", varName);
         } else {
-            TypeCheckExpAnalysis expChecker = getExpChecker();
-            node.getValue().apply(expChecker);
-
-            PType valueType = expChecker.getType();
+            PType valueType = typeCheck(node.getValue());
             if(valueType == null)
                 valueType = Symbol.identifierType("void");
 
@@ -153,24 +153,25 @@ public class TypeCheckAnalysis extends BaseAnalysis {
     @Override
     public void caseAArrayAssignStatement(AArrayAssignStatement node) {
         String varName = node.getName().toString();
-        Variable variable = currMethod.getIdentifier(varName);
+        Variable variable = currentMethod.getIdentifier(varName);
         if(variable == null) {
             reportError(node.getName(), "Undefined variable %s in array assignment", varName);
         } else {
-            TypeCheckExpAnalysis expChecker = getExpChecker();
+            PType arrayType = variable.getType();
+            if (!(arrayType instanceof AIntArrayType)) {
+                reportError(node.getIndex(), "Type mismatch in array assignment: found %s, expected int[]",
+                            arrayType);
+            }
 
-            node.getIndex().apply(expChecker);
-            PType indexType = expChecker.getType();
-
+            PType indexType = typeCheck(node.getIndex());
             if (!(indexType instanceof AIntType)) {
                 reportError(node.getIndex(), "Type mismatch in array assignment index: found %s, expected int",
                             indexType);
             }
 
-            node.getValue().apply(expChecker);
-            PType valueType = expChecker.getType();
-
-            if (!getSymbolTable().compareTypes(variable.getType(), valueType)) {
+            PType valueType = typeCheck(node.getValue());
+            // Cheat: we know that indexType is an Int, no need to create another instance
+            if (!getSymbolTable().compareTypes(indexType, valueType)) {
                 reportError(node.getValue(), "Type mismatch in array assignment value: found %s, expected %s",
                             valueType, variable.getType());
             }

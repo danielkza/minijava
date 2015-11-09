@@ -3,30 +3,32 @@ package symbol;
 import minijava.node.PType;
 
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class ClassS extends Symbol {
-    private Map<String, Method> methods;
-    private Map<String, Variable> globals;
-
-    private String parent;
-    private ClassS parentClass;
-
-    public ClassS(String id, String parent, SymbolTable symbolTable) {
+    private LinkedHashMap<String, Method> methods = new LinkedHashMap<>();
+    private LinkedHashMap<String, Variable> globals = new LinkedHashMap<>();
+    
+    private String baseClassName;
+    private ClassS baseClass;
+    
+    private Variable thisVar;
+    
+    public ClassS(String id, String baseClassName, SymbolTable symbolTable) {
         super(cleanId(id), identifierType(id), symbolTable);
-
-        if (parent != null)
-            parent = cleanId(parent);
-
-        this.parent = parent;
-        methods = new HashMap<>();
-        globals = new HashMap<>();
+        this.baseClassName = baseClassName;
+        
+        thisVar = new Variable("this", getType(), this);
     }
+    
+    public Variable getThisVar() {
+        return thisVar;
+    }
+    
 
     public boolean addMethod(String id, PType type) {
         id = cleanId(id);
-
         if (methods.containsKey(id))
             return false;
 
@@ -46,7 +48,6 @@ public class ClassS extends Symbol {
         return Collections.unmodifiableMap(methods);
     }
 
-
     public Method getMethodInHierarchy(String id) {
         id = cleanId(id);
 
@@ -56,7 +57,7 @@ public class ClassS extends Symbol {
             if(method != null)
                 return method;
 
-            curClass = curClass.getParentClass();
+            curClass = curClass.getBaseClass();
         }
 
         return null;
@@ -76,27 +77,41 @@ public class ClassS extends Symbol {
         return globals.get(cleanId(id));
     }
 
+    public Map<String, Variable> getVars() {
+        return Collections.unmodifiableMap(globals);
+    }
+    
     public boolean containsVar(String id) {
         return globals.containsKey(cleanId(id));
     }
-
-    public String getParent() {
-        return parent;
+    
+    public String getBaseClassName() {
+        if(baseClass == null) {
+            return baseClassName;
+        } else {
+            return baseClass.getId();
+        }
     }
 
-    public ClassS getParentClass() {
-        if(parent == null)
+    public ClassS getBaseClass() {
+        if(baseClassName != null && baseClass == null)
+            baseClass = findParentClass(baseClassName, getSymbolTable());
+        
+        return baseClass;
+    }
+
+    private static ClassS findParentClass(String className,
+                                          SymbolTable symbolTable) {
+        if(className == null)
             return null;
 
+        ClassS parentClass = symbolTable.getClass(className);
         if(parentClass == null) {
-            parentClass = getSymbolTable().getClass(parent);
-            if(parentClass == null) {
-                String message = String.format(
-                    "Attempted to get parent class '%s', but it was not defined on the symbol table",
-                    parent);
+            String message = String.format(
+                "Attempted to get parent class '%s', but it was not defined on the symbol table",
+                className);
 
-                throw new RuntimeException(message);
-            }
+            throw new RuntimeException(message);
         }
 
         return parentClass;
@@ -106,25 +121,25 @@ public class ClassS extends Symbol {
         id = cleanId(id);
 
         ClassS curClass = this;
-        while(curClass != null) {
+        do {
           Variable var = curClass.getVar(id);
           if(var != null)
               return var;
 
-          curClass = curClass.getParentClass();
-        }
+          curClass = curClass.getBaseClass();
+        } while(curClass != null);
 
         return null;
     }
 
     public boolean isCompatibleWith(ClassS other) {
         ClassS curClass = this;
-        while(curClass != null) {
+        do {
             if(curClass.equals(other))
                 return true;
 
-            curClass = curClass.getParentClass();
-        }
+            curClass = curClass.getBaseClass();
+        } while(curClass != null) ;
 
         return false;
     }

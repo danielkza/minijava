@@ -44,6 +44,10 @@ public class Method extends Symbol {
     public boolean containsParam(String id) {
         return getParam(id) != null;
     }
+    
+    public int getNumParams() {
+        return params.size();
+    }
 
     public boolean addVar(String id, PType type) {
         id = cleanId(id);

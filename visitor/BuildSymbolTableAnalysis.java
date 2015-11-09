@@ -24,24 +24,25 @@ public class BuildSymbolTableAnalysis extends BaseAnalysis {
             return;
         }
 
-        currClass = symbolTable.getClass(className);
+        currentClass = symbolTable.getClass(className);
         for (PVariableDeclaration e : variables) {
             e.apply(this);
         }
         for (PMethodDeclaration e : methods) {
             e.apply(this);
         }
+        currentClass = null;
     }
 
     @Override
     public void caseAMainClass(AMainClass node) {
         String className = node.getName().toString();
         symbolTable.addClass(className, null);
-        currClass = symbolTable.getClass(className);
+        currentClass = symbolTable.getClass(className);
 
-        currClass.addMethod("main", Symbol.identifierType("void"));
+        currentClass.addMethod("main", Symbol.identifierType("void"));
 
-        Method mainMethod = currClass.getMethod("main");
+        Method mainMethod = currentClass.getMethod("main");
         mainMethod.addVar(node.getMethodParameter().toString(), Symbol.identifierType("String[]"));
 
         startMethod(mainMethod, true);
@@ -49,6 +50,7 @@ public class BuildSymbolTableAnalysis extends BaseAnalysis {
         node.getStatement().apply(this);
 
         endMethod(mainMethod);
+        currentClass = null;
     }
 
     @Override
@@ -66,15 +68,15 @@ public class BuildSymbolTableAnalysis extends BaseAnalysis {
     public void caseAVariableDeclaration(AVariableDeclaration node) {
         String varName = node.getName().toString();
 
-        if(currMethod != null) {
-            if (!currMethod.addVar(varName, node.getType())) {
+        if(currentMethod != null) {
+            if (!currentMethod.addVar(varName, node.getType())) {
                 reportError(node, "Variable %s already defined in method %s::%s", varName,
-                            currClass.getId(), currMethod.getId());
+                            currentClass.getId(), currentMethod.getId());
             }
-        } else if (currClass != null) {
-            if (!currClass.addVar(varName, node.getType())) {
+        } else if (currentClass != null) {
+            if (!currentClass.addVar(varName, node.getType())) {
                 reportError(node, "Variable %s already defined in class %s", varName,
-                            currClass.getId());
+                            currentClass.getId());
             }
         }
     }
@@ -82,12 +84,12 @@ public class BuildSymbolTableAnalysis extends BaseAnalysis {
     @Override
     public void caseAMethodDeclaration(AMethodDeclaration node) {
         String methodName = node.getName().toString();
-        if (!currClass.addMethod(methodName, node.getReturnType())) {
+        if (!currentClass.addMethod(methodName, node.getReturnType())) {
             reportError(node, "Method %s already defined in class %s", methodName,
-                        currClass.getId());
+                        currentClass.getId());
         }
 
-        Method method = currClass.getMethod(methodName);
+        Method method = currentClass.getMethod(methodName);
         startMethod(method, false);
 
         applyAll(node.getFormals());
@@ -101,9 +103,9 @@ public class BuildSymbolTableAnalysis extends BaseAnalysis {
     @Override
     public void caseAFormalParameter(AFormalParameter node) {
         String paramName = node.getName().toString();
-        if (!currMethod.addParam(paramName, node.getType())) {
+        if (!currentMethod.addParam(paramName, node.getType())) {
             reportError(node, "Parameter %s already defined in method %s::%s", paramName,
-                        currClass.getId(), currMethod.getId());
+                        currentClass.getId(), currentMethod.getId());
         }
     }
 
